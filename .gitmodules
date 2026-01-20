@@ -1,0 +1,6 @@
+[submodule "tb-webservice"]
+	path = tb-webservice
+	url = https://github.com/bsmallyt/tb-webservice.git
+[submodule "tb-updateservice"]
+	path = tb-updateservice
+	url = https://github.com/bsmallyt/tb-updateservice.git

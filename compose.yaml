@@ -1,0 +1,26 @@
+services:
+  web:
+    image: itsbensmall/tb-web:latest
+    container_name: web
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    networks:
+      - app
+
+  watchtower:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: 
+      - --interval=30
+    environment:
+      WATCHTOWER_NOTIFICATIONS: shoutrrr
+      WATCHTOWER_NOTIFICATION_URL: ${WATCHTOWER_SHOUTRRR_WEBHOOK}
+    restart: unless-stopped
+    
+networks:
+  app:
+    driver: bridge
