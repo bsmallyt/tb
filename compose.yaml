@@ -3,24 +3,61 @@ services:
     image: itsbensmall/tb-web:latest
     container_name: web
     labels:
-      - "com.centurylinklabs.watchtower.enable=true"
+      - "com.centurylinklabs.watchtower.scope=tb"
     restart: unless-stopped
     ports:
       - "8080:8080"
     networks:
       - app
 
+  keycloak-postgres:
+    image: postgres:latest 
+    container_name: keycloak-postgres
+    environment:
+      - POSTGRES_DB: keycloak
+      - POSTGRES_USER: ${KEYCLOAK_POSTGRES_USER}
+      - POSTGRES_PASSWORD: ${KEYCLOAK_POSTGRES_PASSWORD}
+    volumes:
+      - keycloak_postgres_data:/var/lib/postgressql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: keycloak
+    depends_on:
+      keycloak-postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    networks:
+      - auth
+
   watchtower:
     image: containrrr/watchtower
+    container_name: watchtower
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     command: 
       - --interval=30
+      - --scope tb
+    labels:
+      - "com.centurylinklabs.watchtower.scope=tb"
     environment:
       WATCHTOWER_NOTIFICATIONS: shoutrrr
       WATCHTOWER_NOTIFICATION_URL: ${WATCHTOWER_SHOUTRRR_WEBHOOK}
     restart: unless-stopped
-    
+
 networks:
   app:
     driver: bridge
+  auth:
+    driver: bridge
+
+volummes:
+  keycloak_postgres_data:
