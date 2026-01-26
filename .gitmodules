@@ -4,3 +4,6 @@
 [submodule "tb-updateservice"]
 	path = tb-updateservice
 	url = https://github.com/bsmallyt/tb-updateservice.git
+[submodule "tb-keycloak"]
+	path = tb-keycloak
+	url = https://github.com/bsmallyt/tb-keycloak.git

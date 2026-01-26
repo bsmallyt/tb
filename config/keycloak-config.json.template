@@ -1,0 +1,96 @@
+{
+  "realm": "${KEYCLOAK_REALM}",
+  "enabled": true,
+
+  "clients": [
+    {
+      "clientId": "${KEYCLOAK_WEB_CLIENT_ID}",
+      "enabled": true,
+      "publicClient": true,
+      "redirectUris": ["${KEYCLOAK_WEB_REDIRECT_URI}"],
+      "webOrigins": ["*"]
+    },
+    {
+      "clientId": "${KEYCLOAK_GAMES_CLIENT_ID}",
+      "enabled": true,
+      "publicClient": true,
+      "redirectUris": ["${KEYCLOAK_GAMES_REDIRECT_URI}"],
+      "webOrigins": ["*"]
+    }
+  ],
+
+  "roles": {
+    "realm": [
+      {
+        "name": "app-admin",
+        "composite": true,
+        "clientRole": false,
+        "composites": {
+          "client": {
+            "tb-web": ["admin"],
+            "tb-games": ["admin"]
+          }
+        }
+      }
+    ],
+    "client": {
+      "tb-web": [
+        { "name": "read" },
+        { "name": "write" },
+
+        { 
+          "name": "admin",
+          "composite": true,
+          "composites": {
+            "client": {
+              "tb-web": ["read", "write"]
+            }
+          }
+        }
+      ],
+      "tb-games": [
+        { "name": "read" },
+        { "name": "write" },
+
+        { 
+          "name": "admin",
+          "composite": true,
+          "composites": {
+            "client": {
+              "tb-games": ["read", "write"]
+            }
+          }
+        }
+      ]
+    }
+  },
+
+  "groups": [
+    {
+      "name": "admin",
+      "path": "/admin",
+      "realmRoles": ["app-admin"]
+    },
+    {
+      "name": "web-admin",
+      "path": "/web-admin",
+      "clientRoles": {
+        "tb-web": ["admin"]
+      }
+    },
+    {
+      "name": "web-user",
+      "path": "/web-user",
+      "clientRoles": {
+        "tb-web": ["read"]
+      }
+    },
+    {
+      "name": "game-admin",
+      "path": "/game-admin",
+      "clientRoles": {
+        "tb-games": ["admin"]
+      }
+    }
+  ]
+}
