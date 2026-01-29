@@ -2,20 +2,31 @@
   "realm": "${KEYCLOAK_REALM}",
   "enabled": true,
 
+  "registrationAllowed": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "verifyEmail": false,
+  "resetPasswordAllowed": false,
+  "rememberMe": true,
+
   "clients": [
     {
       "clientId": "${KEYCLOAK_WEB_CLIENT_ID}",
       "enabled": true,
       "publicClient": true,
-      "redirectUris": ["${KEYCLOAK_WEB_REDIRECT_URI}"],
-      "webOrigins": ["*"]
+      "webOrigins": ["*"],
+      "redirectUris": [
+        "${KEYCLOAK_WEB_REDIRECT_URI}"
+      ]
     },
     {
       "clientId": "${KEYCLOAK_GAMES_CLIENT_ID}",
       "enabled": true,
       "publicClient": true,
-      "redirectUris": ["${KEYCLOAK_GAMES_REDIRECT_URI}"],
-      "webOrigins": ["*"]
+      "webOrigins": ["*"],
+      "redirectUris": [
+        "${KEYCLOAK_GAMES_REDIRECT_URI}"
+      ]
     }
   ],
 

@@ -1,14 +1,14 @@
 services:
-  init-config:
+  config-dist:
     image: alpine:latest
-    container_name: init-config
+    container_name: config-dist
     environment:
-      KEYCLOAK_URL: http://keycloak:8081/
+      KEYCLOAK_URL: http://localhost:8081/
       KEYCLOAK_REALM: tb-apps
       KEYCLOAK_WEB_CLIENT_ID: tb-web
-      KEYCLOAK_WEB_REDIRECT_URI: http://web:8080/
+      KEYCLOAK_WEB_REDIRECT_URI: http://localhost:8080/*
       KEYCLOAK_GAMES_CLIENT_ID: tb-games
-      KEYCLOAK_GAMES_REDIRECT_URI: http://games:8080/
+      KEYCLOAK_GAMES_REDIRECT_URI: http://localhost:8080/*
     volumes:
       - keycloak_config:/opt/keycloak/data/import
       - web_config:/usr/share/nginx/html/assets
@@ -24,7 +24,8 @@ services:
     image: itsbensmall/tb-web:latest
     container_name: web
     depends_on:
-      - init-config
+      config-dist:
+        condition: service_completed_successfully
     labels:
       - "com.centurylinklabs.watchtower.scope=tb"
     volumes:
@@ -60,8 +61,10 @@ services:
     image: quay.io/keycloak/keycloak:latest
     container_name: keycloak
     depends_on:
-      - init-config
-      - keycloak-postgres
+      config-dist:
+        condition: service_completed_successfully
+      keycloak-postgres:
+        condition: service_healthy
     environment:
       KC_DB: postgres
       KC_DB_URL_HOST: keycloak-postgres

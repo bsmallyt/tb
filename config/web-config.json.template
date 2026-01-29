@@ -5,7 +5,6 @@
     "clientId": "${KEYCLOAK_WEB_CLIENT_ID}"
   },
   "initOptions": {
-    "onLoad": "check-sso",
-    "silentCheckSsoRedirectUri": "${KEYCLOAK_WEB_REDIRECT_URI}"
+    "onLoad": "check-sso"
   }
 }
