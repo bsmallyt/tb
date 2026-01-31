@@ -1,4 +1,7 @@
 {
+  "env": {
+    "url": "${WEB_URL}"
+  },
   "config": {
     "url": "${KEYCLOAK_URL}",
     "realm": "${KEYCLOAK_REALM}",

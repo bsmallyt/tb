@@ -1,0 +1,6 @@
+name: Build and Publish New Android Build
+
+on:
+  push:
+    branches: ['main']
+
