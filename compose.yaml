@@ -4,31 +4,29 @@ services:
     container_name: config-dist
     environment:
       WEB_URL: https://trulyben.com
-      KEYCLOAK_URL: https://keycloak.trulyben.com/*
+      KEYCLOAK_URL: https://auth.trulyben.com
       KEYCLOAK_HOSTNAME: keycloak.trulyben.com
       KEYCLOAK_REALM: tb-apps
       KEYCLOAK_WEB_CLIENT_ID: tb-web
       KEYCLOAK_WEB_REDIRECT_URI: https://trulyben.com/home
       KEYCLOAK_GAMES_CLIENT_ID: tb-games
       KEYCLOAK_GAMES_REDIRECT_URI: https://games.trulyben.com/home
+
+      CLOUDFLARE_TUNNEL_NAME: cloudflare
+      WEB_HOSTNAME: trulyben.com
+      WEB_PORT: 8080
+      KEYCLOAK_PORT: 8443
     volumes:
-      - keycloak_certs:/etc/x509
       - keycloak_config:/opt/keycloak/data/import
       - web_config:/usr/share/nginx/html/assets
+      - cloudflare_config:/etc/cloudflared
       - ./config:/tmp
     command: > 
       sh -c '
         apk add --no-cache gettext openssl &&
-
-        # generate certs
-        mkdir -p /etc/x509 &&
-        openssl req -x509 -newkey rsa:4096 -keyout /etc/x509/key.pem -out /etc/x509/cert.pem -days 365 -nodes -subj "/CN=$$KEYCLOAK_HOSTNAME" &&
-        chown 1000:1000 /etc/x509/key.pem /etc/x509/cert.pem &&
-        chmod 640 /etc/x509/key.pem /etc/x509/cert.pem &&
-
-        # generate configs
         envsubst < /tmp/keycloak-config.json.template > /opt/keycloak/data/import/config.json &&
-        envsubst < /tmp/web-config.json.template > /usr/share/nginx/html/assets/config.json
+        envsubst < /tmp/web-config.json.template > /usr/share/nginx/html/assets/config.json &&
+        envsubst < /tmp/cloudflare-config.yaml.template > /etc/cloudflared/config.yaml
       '
 
   web:
@@ -86,9 +84,11 @@ services:
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
 
+      KC_HEALTH_ENABLED: true
+
       KC_HTTPS_PORT: 8443
-      KC_HTTPS_CERTIFICATE_FILE: /etc/x509/cert.pem
-      KC_HTTPS_CERTIFICATE_KEY_FILE: /etc/x509/key.pem
+      KC_HTTPS_CERTIFICATE_FILE: /opt/keycloak/conf/cloudflare.crt
+      KC_HTTPS_CERTIFICATE_KEY_FILE: /opt/keycloak/conf/cloudflare.key
 
       KC_HOSTNAME: keycloak.trulyben.com
       KC_HOSTNAME_STRICT: "false"
@@ -97,10 +97,9 @@ services:
       KC_HTTP_ENABLED: "false"
     volumes:
       - keycloak_config:/opt/keycloak/data/import
-      - keycloak_certs:/etc/x509:ro
+      - ./certs/cloudflare.crt:/opt/keycloak/conf/cloudflare.crt
+      - ./certs/cloudflare.key:/opt/keycloak/conf/cloudflare.key
     restart: unless-stopped
-    ports:
-      - "8443:8443"
     networks:
       - auth
       - app
@@ -125,10 +124,16 @@ services:
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: cloudflare
+    depends_on:
+      config-dist:
+        condition: service_completed_successfully
     restart: unless-stopped
     command: tunnel --no-autoupdate run --token $CLOUDFLARE_TUNNEL_TOKEN
     environment:
       - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    networks:
+      - app
+      - auth
 
 networks:
   app:
@@ -138,6 +143,6 @@ networks:
 
 volumes:
   keycloak_postgres_data:
-  keycloak_certs:
   keycloak_config:
   web_config:
+  cloudflare_config:
