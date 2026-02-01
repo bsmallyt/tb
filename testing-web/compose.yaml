@@ -3,18 +3,18 @@ services:
     image: alpine:latest
     container_name: config-dist
     environment:
-      WEB_URL: https://trulyben.com
-      KEYCLOAK_URL: https://auth.trulyben.com
-      KEYCLOAK_HOSTNAME: auth.trulyben.com
+      WEB_URL: http://localhost:8080
+      KEYCLOAK_URL: http://localhost:8081
+      KEYCLOAK_HOSTNAME: keycloak
       KEYCLOAK_REALM: tb-apps
       KEYCLOAK_WEB_CLIENT_ID: tb-web
-      KEYCLOAK_WEB_REDIRECT_URI: https://trulyben.com/home
+      KEYCLOAK_WEB_REDIRECT_URI: http://localhost:8080/home
       KEYCLOAK_GAMES_CLIENT_ID: tb-games
-      KEYCLOAK_GAMES_REDIRECT_URI: https://games.trulyben.com/home
+      KEYCLOAK_GAMES_REDIRECT_URI: http://localhost:8080/home
     volumes:
       - keycloak_config:/opt/keycloak/data/import
       - web_config:/usr/share/nginx/html/assets
-      - ./config:/tmp
+      - ../config:/tmp
     command: > 
       sh -c '
         apk add --no-cache gettext openssl &&
@@ -23,7 +23,7 @@ services:
       '
 
   web:
-    image: itsbensmall/tb-web:latest
+    build: ../tb-webservice
     container_name: web
     depends_on:
       config-dist:
@@ -79,52 +79,20 @@ services:
 
       KC_HEALTH_ENABLED: true
 
-      KC_HTTP_PORT: 8080
+      KC_HTTP_PORT: 8081
       KC_HTTP_ENABLED: "true"
       KC_HTTPS_ENABLED: "false"
-      KC_PROXY: edge
-      KC_PROXY_HEADERS: xforwarded
-      KC_HOSTNAME: auth.trulyben.com
-      KC_HOSTNAME_URL: https://auth.trulyben.com
-      KC_HOSTNAME_ADMIN_URL: https://auth.trulyben.com
-      KC_HOSTNAME_STRICT: "true"
-      KC_HOSTNAME_STRICT_BACKCHANNEL: "false"
+      KC_PROXY: none
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_STRICT: "false"
     volumes:
       - keycloak_config:/opt/keycloak/data/import
     restart: unless-stopped
+    ports:
+      - "8081:8081"
     networks:
       - auth
     command: start --import-realm
-
-  watchtower:
-    image: containrrr/watchtower:latest
-    container_name: watchtower
-    labels:
-      - "com.centurylinklabs.watchtower.scope=tb"
-    environment:
-      DOCKER_API_VERSION: 1.44
-      WATCHTOWER_NOTIFICATIONS: shoutrrr
-      WATCHTOWER_NOTIFICATION_URL: ${WATCHTOWER_SHOUTRRR_WEBHOOK}
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    restart: unless-stopped
-    command: 
-      - --interval=30
-      - --scope=tb
-
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    container_name: cloudflare
-    depends_on:
-      config-dist:
-        condition: service_completed_successfully
-    restart: unless-stopped
-    command: tunnel --no-autoupdate run --token $CLOUDFLARE_TUNNEL_TOKEN
-    environment:
-      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
-    networks:
-      - app
-      - auth
 
 networks:
   app:
