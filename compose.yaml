@@ -3,7 +3,7 @@ services:
     image: alpine:latest
     container_name: config-dist
     environment:
-      WEB_URL: https://trulyben.com
+      WEB_URL: https://trulyben.com/home
       KEYCLOAK_URL: https://auth.trulyben.com
       KEYCLOAK_HOSTNAME: auth.trulyben.com
       KEYCLOAK_REALM: tb-apps

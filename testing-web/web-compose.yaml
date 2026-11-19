@@ -3,7 +3,7 @@ services:
     image: alpine:latest
     container_name: config-dist
     environment:
-      WEB_URL: http://localhost:8080
+      WEB_URL: http://localhost:8080/home
       KEYCLOAK_URL: http://localhost:8081
       KEYCLOAK_HOSTNAME: keycloak
       KEYCLOAK_REALM: tb-apps
@@ -13,30 +13,12 @@ services:
       KEYCLOAK_GAMES_REDIRECT_URI: http://localhost:8080/home
     volumes:
       - keycloak_config:/opt/keycloak/data/import
-      - web_config:/usr/share/nginx/html/assets
       - ../config:/tmp
     command: > 
       sh -c '
         apk add --no-cache gettext openssl &&
-        envsubst < /tmp/keycloak-config.json.template > /opt/keycloak/data/import/config.json &&
-        envsubst < /tmp/web-config.json.template > /usr/share/nginx/html/assets/config.json
+        envsubst < /tmp/keycloak-config.json.template > /opt/keycloak/data/import/config.json
       '
-
-  web:
-    build: ../tb-webservice
-    container_name: web
-    depends_on:
-      config-dist:
-        condition: service_completed_successfully
-    labels:
-      - "com.centurylinklabs.watchtower.scope=tb"
-    volumes:
-      - "web_config:/usr/share/nginx/html/assets"
-    restart: unless-stopped
-    ports:
-      - "8080:8080"
-    networks:
-      - app
 
   keycloak-postgres:
     image: postgres:latest 
@@ -103,4 +85,3 @@ networks:
 volumes:
   keycloak_postgres_data:
   keycloak_config:
-  web_config:
